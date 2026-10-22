@@ -1,8 +1,7 @@
-/* Lógica por Árboles — fórmulas con la notación de Priest (An Introduction to Non-Classical Logic)
-   Parámetros proposicionales: p q r s t · predicados: mayúsculas · constantes: a–o · variables: x y z
-   Conectivas: ¬ ∧ ∨ ⊃ ≡ (clásicas) · □ ◇ (modales) · ⥽ (estricto) · > (condicional) · → (condicional
-   intensional de los capítulos 9–11) · ⊐ (condicional intuicionista) · [F] ⟨F⟩ [P] ⟨P⟩ (tiempo)
-   · ∀ ∃ · = (identidad) · E (existencia, en las lógicas libres) */
+/* Logic Tableaux — fórmulas con la notación de Lógica Advance
+   Letras proposicionales: P Q R S T (también p q r s t) · predicados: mayúsculas con nombres (Fa, Rab) · constantes: a–o · variables: x y z
+   Conectivas: ¬ ∧ ∨ → ↔ · □ ◇ · ∀ ∃ · = (identidad). Por dentro, → es el condicional material (imp) y, en la lógica
+   intuicionista, se lee como ⊐ (ico); ↔ es iff. */
 (function (root) {
 'use strict';
 
@@ -27,7 +26,8 @@ const Qf = (t, v, a) => ({ t, v, a });
 const Eq = (x, y) => Atom('=', [x, y]);
 const Ex = x => Atom('E', [x]);
 
-const BIN = { and: '∧', or: '∨', imp: '⊃', iff: '≡', str: '⥽', cnd: '>', arr: '→', ico: '⊐' };
+const BIN = { and: '∧', or: '∨', imp: '→', iff: '↔', str: '⥽', cnd: '>', arr: '⇒', ico: '⊐' };
+const SHOW = { ico: '→' };   // lo que se ve: el condicional intuicionista también se escribe →
 const UN = { box: '□', dia: '◇', G: '[F]', F: '⟨F⟩', H: '[P]', P: '⟨P⟩' };
 const BINOF = {}; Object.keys(BIN).forEach(k => { BINOF[BIN[k]] = k; });
 const isBin = f => !!BIN[f.t];
@@ -43,7 +43,7 @@ function str(f, top) {
     case 'ex': return '∃' + f.v + str(f.a, false);
     default: {
       if (UN[f.t]) return UN[f.t] + str(f.a, false);
-      const s = str(f.a, false) + BIN[f.t] + str(f.b, false);
+      const s = str(f.a, false) + (SHOW[f.t] || BIN[f.t]) + str(f.b, false);
       return top === false ? '(' + s + ')' : s;
     }
   }
@@ -54,15 +54,15 @@ const eq = (a, b) => str(a) === str(b);
 const TENSE = [['[F]', 'G'], ['⟨F⟩', 'F'], ['<F>', 'F'], ['[P]', 'H'], ['⟨P⟩', 'P'], ['<P>', 'P']];
 function parse(src) {
   const s = String(src)
-    .replace(/<->/g, '≡').replace(/->/g, '→').replace(/~/g, '¬').replace(/&/g, '∧').replace(/\|/g, '∨')
+    .replace(/<->/g, '↔').replace(/->/g, '→').replace(/⊃/g, '→').replace(/≡/g, '↔').replace(/~/g, '¬').replace(/&/g, '∧').replace(/\|/g, '∨')
     .replace(/\s+/g, '');
   let i = 0;
   const eat = c => (s.startsWith(c, i) ? (i += c.length, true) : false);
-  /* precedencia de menor a mayor: ≡ · condicionales (asocian a la derecha) · ∨ · ∧ · unarios */
-  function iff() { let a = cond(); while (eat('≡')) a = Bin('iff', a, cond()); return a; }
+  /* precedencia de menor a mayor: ↔ · condicionales (asocian a la derecha) · ∨ · ∧ · unarios */
+  function iff() { let a = cond(); while (eat('↔')) a = Bin('iff', a, cond()); return a; }
   function cond() {
     const a = or();
-    for (const c of ['⊃', '⥽', '>', '→', '⊐']) if (eat(c)) return Bin(BINOF[c], a, cond());
+    for (const c of ['→', '⊐']) if (eat(c)) return Bin(BINOF[c], a, cond());
     return a;
   }
   function or() { let a = and(); while (eat('∨')) a = Bin('or', a, and()); return a; }

@@ -17,105 +17,21 @@ const { str, Not, Un, Bin, Qf, Atom, Eq, Ex, subst } = L;
 const SYS = {};
 const def = (id, nm, o) => { SYS[id] = Object.assign({ id, nm, R: '' }, o); };
 def('CL', 'Lógica clásica', {});
+def('FOL', 'Primer orden clásica', { fo: 'cl' });
 def('K', 'K', { W: 1, md: 'K' });
-def('D', 'D = Kη', { W: 1, md: 'K', R: 'η' });
-def('T', 'T = Kρ', { W: 1, md: 'K', R: 'ρ' });
-def('Kσ', 'Kσ', { W: 1, md: 'K', R: 'σ' });
-def('Kτ', 'Kτ', { W: 1, md: 'K', R: 'τ' });
-def('Kρσ', 'B = Kρσ', { W: 1, md: 'K', R: 'ρσ' });
-def('S4', 'S4 = Kρτ', { W: 1, md: 'K', R: 'ρτ' });
-def('S5', 'S5 = Kρστ', { W: 1, md: 'K', R: 'ρστ' });
-def('Kυ', 'S5 = Kυ', { W: 1, md: 'U' });
-def('Kt', 'Kt', { W: 1, md: 'K', tense: 1 });
-def('Kτt', 'Kτt', { W: 1, md: 'K', tense: 1, R: 'τ' });
-def('N', 'N', { W: 1, md: 'K', nn: 'N' });
-def('S2', 'S2 = Nρ', { W: 1, md: 'K', nn: 'N', R: 'ρ' });
-def('S3', 'S3 = Nρτ', { W: 1, md: 'K', nn: 'N', R: 'ρτ' });
-def('S3.5', 'S3.5 = Nρστ', { W: 1, md: 'K', nn: 'N', R: 'ρστ' });
-def('S0.5', 'S0.5 = Lρ', { W: 1, md: 'K', nn: 'L', R: 'ρ' });
-def('L', 'L = S0.5⁰', { W: 1, md: 'K', nn: 'L' });
-def('C', 'C', { W: 1, md: 'U', cond: 'C' });
-def('C+', 'C⁺', { W: 1, md: 'U', cond: 'C+' });
+def('T', 'T = K + reflexiva', { W: 1, md: 'K', R: 'ρ' });
+def('K4', 'K4 = K + transitiva', { W: 1, md: 'K', R: 'τ' });
+def('GL', 'GL = K4 + Löb (lógica de la demostrabilidad)', { W: 1, md: 'K', R: 'τ', gl: 1 });
+def('S4', 'S4 = K + reflexiva y transitiva', { W: 1, md: 'K', R: 'ρτ' });
+def('S5', 'S5 = K + reflexiva, simétrica y transitiva', { W: 1, md: 'K', R: 'ρστ' });
+def('CK', 'K de dominio constante', { W: 1, md: 'K', fo: 'cl' });
+def('CT', 'T de dominio constante', { W: 1, md: 'K', fo: 'cl', R: 'ρ' });
+def('CS4', 'S4 de dominio constante', { W: 1, md: 'K', fo: 'cl', R: 'ρτ' });
+def('CS5', 'S5 de dominio constante', { W: 1, md: 'U', fo: 'cl' });
 def('I', 'Intuicionista', { W: 1, sg: 1, int: 1, R: 'ρτ' });
 def('IQ', 'Intuicionista de primer orden', { W: 1, sg: 1, int: 1, R: 'ρτ', fo: 'int' });
-def('IQ=', 'Intuicionista de primer orden con identidad', { W: 1, sg: 1, int: 1, R: 'ρτ', fo: 'int', eq: 1, ci: 1 });
-def('FDE', 'FDE', { sg: 1, neg: 'fde', imp: 'def' });
-def('K3', 'K3', { sg: 1, neg: 'fde', imp: 'def', cl: 'k3' });
-def('LP', 'LP', { sg: 1, neg: 'fde', imp: 'def', cl: 'lp' });
-def('FDE2', 'FDE + cierres de K3 y LP', { sg: 1, neg: 'fde', imp: 'def', cl: 'both' });
-def('Ł3', 'Ł3', { sg: 1, neg: 'fde', imp: 'L3', cl: 'k3' });
-def('RM3', 'RM3', { sg: 1, neg: 'fde', imp: 'RM3', cl: 'lp' });
-def('FDE*', 'FDE con estrella', { W: 1, sg: 1, neg: 'star', imp: 'def' });
-def('K4', 'K4', { W: 1, sg: 1, neg: 'fde', imp: 'def', arr: 'K4' });
-def('N4', 'N4', { W: 1, sg: 1, neg: 'fde', imp: 'def', arr: 'N4' });
-def('K*', 'K*', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'K*' });
-def('N*', 'N*', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'N*' });
-def('I4', 'I4', { W: 1, sg: 1, neg: 'fde', imp: 'def', cn: 1, R: 'ρτ' });
-def('I3', 'I3', { W: 1, sg: 1, neg: 'fde', imp: 'def', cn: 1, cl: 'k3', R: 'ρτ' });
-def('W', 'W (conexiva)', { W: 1, sg: 1, neg: 'fde', imp: 'def', cn: 'W', R: 'ρτ' });
-def('KFDE', 'K_FDE (modal de cuatro valores)', { W: 1, sg: 1, neg: 'fde', imp: 'def', md: 'K' });
-def('KK3', 'K_K3', { W: 1, sg: 1, neg: 'fde', imp: 'def', md: 'K', cl: 'k3' });
-def('KLP', 'K_LP', { W: 1, sg: 1, neg: 'fde', imp: 'def', md: 'K', cl: 'lp' });
-def('KFDEρ', 'K_FDE ρ', { W: 1, sg: 1, neg: 'fde', imp: 'def', md: 'K', R: 'ρ' });
-def('KK3τ', 'K_K3 τ', { W: 1, sg: 1, neg: 'fde', imp: 'def', md: 'K', cl: 'k3', R: 'τ' });
-def('KLPρ', 'K_LP ρ', { W: 1, sg: 1, neg: 'fde', imp: 'def', md: 'K', cl: 'lp', R: 'ρ' });
-def('A', 'A (Aristóteles): K3ρτ con persistencia', { W: 1, sg: 1, neg: 'fde', imp: 'def', md: 'K', cl: 'k3', R: 'ρτ', pers: 1 });
-def('QFDE', 'FDE de primer orden', { sg: 1, neg: 'fde', imp: 'def', fo: 'cl', eq: 1 });
-def('QK3', 'K3 de primer orden', { sg: 1, neg: 'fde', imp: 'def', fo: 'cl', eq: 1, cl: 'k3' });
-def('QLP', 'LP de primer orden', { sg: 1, neg: 'fde', imp: 'def', fo: 'cl', eq: 1, cl: 'lp' });
-def('FFDE', 'FDE libre', { sg: 1, neg: 'fde', imp: 'def', fo: 'free' });
-def('FFDE−', 'FDE libre negativa', { sg: 1, neg: 'fde', imp: 'def', fo: 'free', nfree: 'neg' });
-def('FFDE0', 'FDE libre neutra', { sg: 1, neg: 'fde', imp: 'def', fo: 'free', nfree: 'neu' });
-def('QFDE*', 'FDE de primer orden con estrella', { W: 1, sg: 1, neg: 'star', imp: 'def', fo: 'cl', eq: 1, ni: 1 });
-def('QK4', 'K4 de primer orden', { W: 1, sg: 1, neg: 'fde', imp: 'def', arr: 'K4', fo: 'cl' });
-def('QN4', 'N4 de primer orden', { W: 1, sg: 1, neg: 'fde', imp: 'def', arr: 'N4', fo: 'cl' });
-def('QK*', 'K* de primer orden', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'K*', fo: 'cl' });
-def('QN*', 'N* de primer orden', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'N*', fo: 'cl' });
-def('QI4', 'I4 de primer orden', { W: 1, sg: 1, neg: 'fde', imp: 'def', cn: 1, R: 'ρτ', fo: 'int' });
-def('QI3', 'I3 de primer orden', { W: 1, sg: 1, neg: 'fde', imp: 'def', cn: 1, cl: 'k3', R: 'ρτ', fo: 'int' });
-def('QW', 'W de primer orden', { W: 1, sg: 1, neg: 'fde', imp: 'def', cn: 'W', R: 'ρτ', fo: 'int' });
-def('B', 'B (relevante básica)', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'B', tern: 1 });
-def('DW', 'DW = B + C8', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'B', tern: 1, R: 'C8' });
-def('QB', 'B de primer orden', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'B', tern: 1, fo: 'cl' });
-def('QB=', 'B de primer orden con identidad', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'B', tern: 1, fo: 'cl', rid: 1 });
-def('QB=⊆', 'B con identidad y restricción de subconjunto', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'B', tern: 1, fo: 'cl', rid: 1, sc: 1 });
-def('QDW', 'DW de primer orden', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'B', tern: 1, R: 'C8', fo: 'cl' });
-def('CB', 'CB', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'B', tern: 1, cond: 'C' });
-def('CB+', 'CB⁺', { W: 1, sg: 1, neg: 'star', imp: 'def', arr: 'B', tern: 1, cond: 'C+' });
-def('FOL', 'Primer orden clásica', { fo: 'cl', eq: 1 });
-def('CK', 'CK (dominio constante)', { W: 1, md: 'K', fo: 'cl' });
-def('CC', 'CC: C de dominio constante', { W: 1, md: 'U', cond: 'C', fo: 'cl' });
-def('VC', 'VC: C de dominio variable', { W: 1, md: 'U', cond: 'C', fo: 'var' });
-def('CC+', 'CC⁺', { W: 1, md: 'U', cond: 'C+', fo: 'cl' });
-def('VC+', 'VC⁺', { W: 1, md: 'U', cond: 'C+', fo: 'var' });
-def('CL(L)', 'CL: L de dominio constante', { W: 1, md: 'K', nn: 'L', fo: 'cl' });
-def('CLρ', 'CLρ', { W: 1, md: 'K', nn: 'L', fo: 'cl', R: 'ρ' });
-def('VL', 'VL: L de dominio variable', { W: 1, md: 'K', nn: 'L', fo: 'var' });
-def('CN', 'CN: N de dominio constante', { W: 1, md: 'K', nn: 'N', fo: 'cl' });
-def('VN', 'VN: N de dominio variable', { W: 1, md: 'K', nn: 'N', fo: 'var' });
-def('CNρ', 'CNρ (S2 cuantificada)', { W: 1, md: 'K', nn: 'N', fo: 'cl', R: 'ρ' });
-def('CK≈', 'CK(CI): identidad contingente', { W: 1, md: 'K', fo: 'cl', eq: 1, ci: 1 });
-def('CS5≈', 'CS5(CI)', { W: 1, md: 'U', fo: 'cl', eq: 1, ci: 1 });
-def('VK≈', 'VK(CI)', { W: 1, md: 'K', fo: 'var', eq: 1, ci: 1 });
-def('CK=', 'CK(NI): identidad necesaria', { W: 1, md: 'K', fo: 'cl', eq: 1, ni: 1 });
-def('CS5=', 'CS5(NI)', { W: 1, md: 'U', fo: 'cl', eq: 1, ni: 1 });
-def('VK=', 'VK(NI)', { W: 1, md: 'K', fo: 'var', eq: 1, ni: 1 });
-def('VK=−', 'VK(NI) negativa', { W: 1, md: 'K', fo: 'var', eq: 1, ni: 1, nfree: 1 });
-def('CT', 'CT = CKρ', { W: 1, md: 'K', fo: 'cl', R: 'ρ' });
-def('CS4', 'CS4 = CKρτ', { W: 1, md: 'K', fo: 'cl', R: 'ρτ' });
-def('CS5', 'CS5 = CKυ', { W: 1, md: 'U', fo: 'cl' });
-def('CKt', 'CKt (tiempo, dominio constante)', { W: 1, md: 'K', fo: 'cl', tense: 1 });
-def('VK', 'VK (dominio variable)', { W: 1, md: 'K', fo: 'var' });
-def('VT', 'VT = VKρ', { W: 1, md: 'K', fo: 'var', R: 'ρ' });
-def('VKσ', 'VKσ', { W: 1, md: 'K', fo: 'var', R: 'σ' });
-def('VS4', 'VS4 = VKρτ', { W: 1, md: 'K', fo: 'var', R: 'ρτ' });
-def('VS5', 'VS5 = VKυ', { W: 1, md: 'U', fo: 'var' });
-def('VKt', 'VKt (tiempo, dominio variable)', { W: 1, md: 'K', fo: 'var', tense: 1 });
-def('VKτt', 'VKτt', { W: 1, md: 'K', fo: 'var', tense: 1, R: 'τ' });
-def('VK+', 'VK con dominios crecientes', { W: 1, md: 'K', fo: 'var', di: 1 });
-def('VK−', 'VK negativa', { W: 1, md: 'K', fo: 'var', nfree: 1 });
-def('FREE', 'Lógica libre positiva', { fo: 'free', eq: 1 });
-def('NFREE', 'Lógica libre negativa', { fo: 'free', eq: 1, nfree: 1 });
+def('LP', 'LP (lógica de la paradoja)', { sg: 1, neg: 'fde', imp: 'def', cl: 'lp' });
+def('QLP', 'LP de primer orden', { sg: 1, neg: 'fde', imp: 'def', fo: 'cl', cl: 'lp' });
 
 /* ================= nodos ================= */
 const F = (f, w, s) => ({ k: 'f', f, w: w == null ? null : String(w), s: s || '' });
@@ -189,8 +105,8 @@ function expandU(sys, n, B) {
       case 'not': return [one('¬¬', F(g.a, w))];
       case 'and': return [two('¬∧', [F(Not(g.a), w)], [F(Not(g.b), w)])];
       case 'or': return [one('¬∨', F(Not(g.a), w), F(Not(g.b), w))];
-      case 'imp': return [one('¬⊃', F(g.a, w), F(Not(g.b), w))];
-      case 'iff': return [two('¬≡', [F(g.a, w), F(Not(g.b), w)], [F(Not(g.a), w), F(g.b, w)])];
+      case 'imp': return [one('¬→', F(g.a, w), F(Not(g.b), w))];
+      case 'iff': return [two('¬↔', [F(g.a, w), F(Not(g.b), w)], [F(Not(g.a), w), F(g.b, w)])];
       case 'str': return [one('¬⥽', F(Not(Un('box', Bin('imp', g.a, g.b))), w))];
       case 'box': return modOK ? [one('¬□', F(Un('dia', Not(g.a)), w))] : [];
       case 'dia': return modOK ? [one('¬◇', F(Un('box', Not(g.a)), w))] : [];
@@ -212,8 +128,8 @@ function expandU(sys, n, B) {
   switch (f.t) {
     case 'and': return [one('∧', F(f.a, w), F(f.b, w))];
     case 'or': return [two('∨', [F(f.a, w)], [F(f.b, w)])];
-    case 'imp': return [two('⊃', [F(Not(f.a), w)], [F(f.b, w)])];
-    case 'iff': return [two('≡', [F(f.a, w), F(f.b, w)], [F(Not(f.a), w), F(Not(f.b), w)])];
+    case 'imp': return [two('→', [F(Not(f.a), w)], [F(f.b, w)])];
+    case 'iff': return [two('↔', [F(f.a, w), F(f.b, w)], [F(Not(f.a), w), F(Not(f.b), w)])];
     case 'str': return [one('⥽', F(Un('box', Bin('imp', f.a, f.b)), w))];
     case 'box':
       if (!modOK) return [];
@@ -223,7 +139,7 @@ function expandU(sys, n, B) {
       if (!modOK) return [];
       if (sys.nn === 'N' && !at0 && !B.boxed(w)) return [];   // mundo no normal mientras nada lo obligue a ser normal
       if (sys.md === 'U') return [{ r: '◇', fresh: true, make: X => [[F(f.a, X.next())]], sat: X => X.worlds.some(j => X.has(F(f.a, j))) }];
-      return [{ r: '◇', fresh: true, make: X => { const j = X.next(); return [[Rl(w, j), F(f.a, j)]]; }, sat: X => rel(w).some(r => X.has(F(f.a, r.b))) }];
+      return [{ r: '◇', fresh: true, make: X => { const j = X.next(); return [[Rl(w, j), F(f.a, j), ...(sys.gl ? [F(Un('box', Not(f.a)), j)] : [])]]; }, sat: X => rel(w).some(r => X.has(F(f.a, r.b))) }];
     }
     case 'G': return rel(w).map(r => one('[F]', F(f.a, r.b)));
     case 'H': return relTo(w).map(r => one('[P]', F(f.a, r.a)));
@@ -259,16 +175,16 @@ function expandS(sys, n, B) {
       case 'and': return [one('¬∧', S(Bin('or', Not(g.a), Not(g.b)), s))];
       case 'or': return [one('¬∨', S(Bin('and', Not(g.a), Not(g.b)), s))];
       case 'imp':
-        if (sys.imp === 'def') return [one('¬⊃', S(Not(Bin('or', Not(g.a), g.b)), s))];
+        if (sys.imp === 'def') return [one('¬→', S(Not(Bin('or', Not(g.a), g.b)), s))];
         return pos ? [one('¬⊃+', S(g.a, P), S(Not(g.b), P))] : [two('¬⊃−', [S(g.a, M)], [S(Not(g.b), M)])];
-      case 'iff': return [one('¬≡', S(Not(Bin('and', Bin('imp', g.a, g.b), Bin('imp', g.b, g.a))), s))];
+      case 'iff': return [one('¬↔', S(Not(Bin('and', Bin('imp', g.a, g.b), Bin('imp', g.b, g.a))), s))];
       case 'all': return sys.fo ? [one('¬∀', S(Qf('ex', g.v, Not(g.a)), s))] : [];
       case 'ex': return sys.fo ? [one('¬∃', S(Qf('all', g.v, Not(g.a)), s))] : [];
       case 'box': return [one('¬□', S(Un('dia', Not(g.a)), s))];
       case 'dia': return [one('¬◇', S(Un('box', Not(g.a)), s))];
       case 'ico':
-        if (sys.cn === 'W') return [one(pos ? '¬⊐+' : '¬⊐−', S(Bin('ico', g.a, Not(g.b)), s))];
-        return pos ? [one('¬⊐+', S(g.a, P), S(Not(g.b), P))] : [two('¬⊐−', [S(g.a, M)], [S(Not(g.b), M)])];
+        if (sys.cn === 'W') return [one(pos ? '¬→+' : '¬→−', S(Bin('ico', g.a, Not(g.b)), s))];
+        return pos ? [one('¬→+', S(g.a, P), S(Not(g.b), P))] : [two('¬→−', [S(g.a, M)], [S(Not(g.b), M)])];
       case 'arr':
         if (!normalHere) return [];
         if (pos) return [{ r: '¬→+', fresh: true, make: X => { const j = X.next(); return [[S(g.a, P, j), S(Not(g.b), P, j)]]; }, sat: X => X.worlds.some(j => X.has(S(g.a, P, j)) && X.has(S(Not(g.b), P, j))) }];
@@ -279,9 +195,9 @@ function expandS(sys, n, B) {
   switch (f.t) {
     case 'and': return pos ? [one('∧+', S(f.a, P), S(f.b, P))] : [two('∧−', [S(f.a, M)], [S(f.b, M)])];
     case 'or': return pos ? [two('∨+', [S(f.a, P)], [S(f.b, P)])] : [one('∨−', S(f.a, M), S(f.b, M))];
-    case 'iff': return [one('≡', S(Bin('and', Bin('imp', f.a, f.b), Bin('imp', f.b, f.a)), s))];
+    case 'iff': return [one('↔', S(Bin('and', Bin('imp', f.a, f.b), Bin('imp', f.b, f.a)), s))];
     case 'imp':
-      if (sys.imp === 'def') return [one('⊃', S(Bin('or', Not(f.a), f.b), s))];
+      if (sys.imp === 'def') return [one('→', S(Bin('or', Not(f.a), f.b), s))];
       if (sys.imp === 'L3') return pos
         ? [{ r: '⊃+', alts: [[S(Not(f.a), P)], [S(f.b, P)], [S(Bin('or', f.a, Not(f.a)), M), S(Bin('or', f.b, Not(f.b)), M)]] }]
         : [two('⊃−', [S(Not(f.a), M), S(f.b, M), S(f.a, P)], [S(Not(f.a), M), S(f.b, M), S(Not(f.b), P)])];
@@ -312,8 +228,8 @@ function expandS(sys, n, B) {
       return out;
     }
     case 'ico':   // condicional intuicionista
-      if (pos) return B.rel.filter(r => r.a === x && !r.A).map(r => two('⊐+', [S(f.a, M, r.b)], [S(f.b, P, r.b)]));
-      return [{ r: '⊐−', fresh: true, make: X => { const j = X.next(); return [[Rl(x, j), S(f.a, P, j), S(f.b, M, j)]]; },
+      if (pos) return B.rel.filter(r => r.a === x && !r.A).map(r => two('→+', [S(f.a, M, r.b)], [S(f.b, P, r.b)]));
+      return [{ r: '→−', fresh: true, make: X => { const j = X.next(); return [[Rl(x, j), S(f.a, P, j), S(f.b, M, j)]]; },
         sat: X => B.rel.some(r => r.a === x && X.has(S(f.a, P, r.b)) && X.has(S(f.b, M, r.b))) }];
     case 'arr':
       if (sys.tern) {   // relevantes: relación ternaria; en 0 vale r0xx para todo x (regla de normalidad, implícita)
@@ -496,10 +412,24 @@ function clash(sys, a, b) {
 const selfClash = (sys, a) => a.k === 'f' && sys.sg ? (a.s === '-' && (!sys.rid || a.w === '0') && a.f.t === 'atom' && a.f.p === '=' && a.f.args[0] === a.f.args[1]) : a.k === 'f' && !sys.nfree && a.f.t === 'not' && a.f.a.t === 'atom' && a.f.a.p === '=' && a.f.a.args[0] === a.f.a.args[1];
 
 /* ================= el árbol ================= */
+/* en la lógica intuicionista, → es el condicional ⊐ y ↔ son dos de ellos */
+function adapt(sys, f) {
+  if (!sys.int) return f;
+  const go = g => {
+    if (g.t === 'atom') return g;
+    if (g.t === 'imp') return Bin('ico', go(g.a), go(g.b));
+    if (g.t === 'iff') return Bin('and', Bin('ico', go(g.a), go(g.b)), Bin('ico', go(g.b), go(g.a)));
+    if (g.t === 'not') return Not(go(g.a));
+    if (g.t === 'all' || g.t === 'ex') return L.Qf(g.t, g.v, go(g.a));
+    return g.b ? Bin(g.t, go(g.a), go(g.b)) : L.Un(g.t, go(g.a));
+  };
+  return go(f);
+}
 class Tab {
   constructor(sysId, prem, concl) {
     this.sys = SYS[sysId];
     if (!this.sys) throw new Error('sistema desconocido: ' + sysId);
+    prem = prem.map(f => adapt(this.sys, f)); concl = adapt(this.sys, concl);
     this.prem = prem; this.concl = concl;
     this.nodes = []; this.root = null;
     const w = this.sys.W ? '0' : null;
@@ -734,7 +664,7 @@ function nextMove(t) {
     const closes = alt => alt.some(sp => sp.k === 'f' && B.path.some(m => clash(t.sys, Object.assign({}, sp), m)));
     B.path.forEach(n => expand(t.sys, n, B).forEach(I => {
       if (t.sat(I, B, n.id)) return;
-      const reuse = ['□', '∀', '[F]', '[P]', '>', '>+', '→+', '¬→−', '⊐+', '¬+'].includes(I.r);
+      const reuse = ['□', '∀', '[F]', '[P]', '>', '>+', '→+', '¬→−', '→+', '¬+'].includes(I.r);
       const br = !I.fresh && I.alts.length > 1;
       let pr = I.fresh ? 3 : br ? (reuse ? 5 : 4) : (reuse ? 2 : 0);
       if (br) { const c = I.alts.filter(closes).length; if (c === I.alts.length) pr = -1; else if (c) pr -= 2.5; }
@@ -775,7 +705,7 @@ function solve(sysId, prem, concl, budget) {
       if (t.findClash(leaf)) continue;
       if (!t.incomplete(leaf)) { open = leaf; break; }
       const M = readModel(t, leaf);
-      if (M && checkModel(t.sys, M, prem, concl)) { open = leaf; break; }
+      if (M && checkModel(t.sys, M, t.prem, t.concl)) { open = leaf; break; }
     }
     if (open) { verdict = 'invalid'; }
   }
@@ -1024,5 +954,5 @@ function label(n) {
   return { f: str(n.f), s: n.s === '-' ? '−' : n.s, w: n.w };
 }
 
-root.Tableau = { SYS, STRUCT, Tab, expand, structOf, clash, nextMove, doMove, solve, readModel, checkModel, valueAt, label, keyOf, star };
+root.Tableau = { SYS, STRUCT, adapt, Tab, expand, structOf, clash, nextMove, doMove, solve, readModel, checkModel, valueAt, label, keyOf, star };
 })(typeof window !== 'undefined' ? window : globalThis);

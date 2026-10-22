@@ -13,9 +13,9 @@ let bad = 0, n = 0, trees = 0;
 const err = m => { bad++; console.log('MAL ' + m); };
 const only = process.argv[2];
 C.worlds.forEach(W => {
-  if (only && W.num !== only) return;
+  if (only && String(W.k) !== only) return;
   W.stages.forEach((s, i) => {
-    const where = `cap. ${W.num} etapa ${i + 1} «${s.title}»`;
+    const where = `mundo ${W.k} etapa ${i + 1} «${s.title}»`;
     n++;
     try {
       if (s.t === 'A') {
@@ -38,7 +38,7 @@ C.worlds.forEach(W => {
       if (s.t === 'V') s.ex.forEach(e => {
         const sys = e[3] || s.sys[0];
         let v;
-        if (TB.SYS[sys] && !(s.mv && Sem.MV[sys])) v = TB.solve(sys, e[0].map(L.parse), L.parse(e[1]), 600).verdict;
+        if (TB.SYS[sys] && !(s.mv && Sem.MV[sys])) v = TB.solve(sys, e[0].map(L.parse), L.parse(e[1]), 500).verdict;
         else v = SEM.checkMV(sys, e[0].map(L.parse), L.parse(e[1]), s.fo ? true : undefined).v;
         if (e[2] && v !== e[2]) err(`${where}: ejemplo ${e[0].join(', ')} ⊢ ${e[1]} en ${sys} da ${v}, anotado ${e[2]}`);
       });
@@ -46,7 +46,7 @@ C.worlds.forEach(W => {
       if (s.t === 'Q') s.qs.forEach((q, k) => { if (q.ok == null || q.ok >= q.opts.length) err(`${where}: pregunta ${k + 1} sin respuesta correcta válida`); });
       /* las fórmulas de los textos deben leerse */
       const texts = JSON.stringify(s).match(/\{[^{}"]*\}/g) || [];
-      texts.forEach(t => { const x = t.slice(1, -1); if (/^[a-zA-Z0-9¬∧∨⊃≡⥽>→⊐□◇∀∃=()\[\]⟨⟩]+$/.test(x) && !/^[a-z]$/.test(x)) { try { L.parse(x); } catch (e) { /* letras sueltas y trozos como A, B no son fórmulas del lenguaje objeto */ } } });
+      texts.forEach(t => { const x = t.slice(1, -1); if (/^[a-zA-Z0-9¬∧∨→↔□◇∀∃=()\[\]]+$/.test(x) && !/^[a-z]$/.test(x)) { try { L.parse(x); } catch (e) { /* letras sueltas y trozos como A, B no son fórmulas del lenguaje objeto */ } } });
     } catch (e) { err(`${where}: ${e.message}`); }
   });
 });

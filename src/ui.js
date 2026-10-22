@@ -1,4 +1,4 @@
-/* Lógica por Árboles — interfaz */
+/* Logic Tableaux — interfaz */
 (function () {
 'use strict';
 const L = window.Logic, TB = window.Tableau, SEM = window.Sem, C = window.CONTENT;
@@ -29,6 +29,18 @@ const GLY = {
   '⊨': ['#.....', '#.....', '######', '#.....', '######', '#.....', '#.....'],
   '↑': ['...#...', '..###..', '.#.#.#.', '#..#..#', '...#...', '...#...', '...#...'],
   '⋮': ['.#.', '...', '...', '.#.', '...', '...', '.#.'],
+  '⊥': ['...#...', '...#...', '...#...', '...#...', '...#...', '...#...', '#######'],
+  num: ['.#.#.', '.#.#.', '#####', '.#.#.', '#####', '.#.#.', '.#.#.'],
+  /* símbolos de la aritmética y de la metateoría (Mundo 9) */
+  '⌜': ['###.', '#...', '#...', '....', '....', '....', '....'],
+  '⌝': ['.###', '...#', '...#', '....', '....', '....', '....'],
+  'ℕ': ['##...#', '###..#', '####.#', '##.###', '##..##', '##...#', '##...#'],
+  'ω': ['.......', '.......', '.#...#.', '#.....#', '#..#..#', '#..#..#', '.##.##.'],
+  'Σ': ['######', '#.....', '.#....', '..#...', '.#....', '#.....', '######'],
+  'ε': ['.....', '.....', '.###.', '#....', '.##..', '#....', '.###.'],
+  '×': ['.....', '.....', '#...#', '.#.#.', '..#..', '.#.#.', '#...#'],
+  '₀': ['...', '...', '...', '###', '#.#', '#.#', '###'],
+  '₁': ['...', '...', '...', '.#.', '##.', '.#.', '###'],
   star: ['...#...', '...#...', '#######', '.#####.', '..###..', '.##.##.', '.#...#.'],
   lock: ['..###..', '.#...#.', '.#...#.', '#######', '###.###', '###.###', '#######'],
   check: ['.......', '......#', '.....##', '#...##.', '##.##..', '.###...', '..#....'],
@@ -45,7 +57,7 @@ const GLY = {
   loop: ['..###.#', '.#...##', '#...###', '#......', '#.....#', '.#...#.', '..###..'],
   val: ['#....#.', '#....#.', '.#..#..', '.#..#..', '..##...', '..##...', '.......']
 };
-const OPS = '∧∨⊃⊐≡⥽>→↔⊢⊬⊨';
+const OPS = '∧∨→↔⊢⊬⊨';
 const gcache = {};
 function glyph(ch) {
   if (gcache[ch]) return gcache[ch];
@@ -73,9 +85,9 @@ const fh = f => fm(L.str(f));
 /* en los textos, {…} es una fórmula */
 const tx = s => String(s).replace(/\{([^}]*)\}/g, (m, a) => fm(a));
 
-/* ---------- Ramón, el pulpo (PixelLab, 48×48) ---------- */
+/* ---------- Minerva, la lechuza (PixelLab, 48×48) ---------- */
 const PULPO = window.LA_PULPO || {};
-const MOODS = { neutral: 'atento', happy: 'contento', sad: 'preocupado', think: 'pensativo', brave: 'decidido' };
+const MOODS = { neutral: 'atenta', happy: 'contenta', sad: 'preocupada', think: 'pensativa', brave: 'decidida' };
 const pic = (href, cls) => `<image${cls ? ` class="${cls}"` : ''} width="48" height="48" href="${href}"/>`;
 const pcache = {};
 function pulpoBody(m) {
@@ -86,12 +98,12 @@ function pulpoBody(m) {
 }
 const owl = (px, mood) => {
   const m = MOODS[mood] ? mood : 'neutral';
-  return `<svg class="owl m-${m}" width="${24 * px}" height="${24 * px}" viewBox="0 0 48 48" shape-rendering="crispEdges" role="img" aria-label="Ramón, el pulpo, ${MOODS[m]}">${pulpoBody(m)}</svg>`;
+  return `<svg class="owl m-${m}" width="${24 * px}" height="${24 * px}" viewBox="0 0 48 48" shape-rendering="crispEdges" role="img" aria-label="Minerva, la lechuza, ${MOODS[m]}">${pulpoBody(m)}</svg>`;
 };
 const moodOf = text => (/¡/.test(text) ? 'happy' : /\?/.test(text) ? 'think' : 'neutral');
 
 /* ---------- partida guardada ---------- */
-const KEY = 'logica-arboles-v1';
+const KEY = 'logic-tableaux-v1';
 const save = { done: {}, mv: null, sv: null, free: false, theme: '' };
 try { Object.assign(save, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { /* sin almacenamiento */ }
 if (window.LA_SAVE) Object.assign(save, window.LA_SAVE);
@@ -101,7 +113,7 @@ if (save.sv == null) save.sv = 4;
 const applyTheme = () => { if (save.theme) document.documentElement.dataset.theme = save.theme; else delete document.documentElement.dataset.theme; };
 applyTheme();
 
-const sid = (w, s) => C.worlds[w].num + '-' + s;
+const sid = (w, s) => C.worlds[w].k + '-' + s;
 const isEx = s => s.t !== 'T';
 function wstat(w) {
   const st = C.worlds[w].stages;
@@ -223,31 +235,31 @@ const starsHTML = n => `<span class="stars" aria-label="${n} de 3 estrellas">${[
 let heroTab = null;
 function scrTitle() {
   const any = Object.keys(save.done).length > 0;
-  if (!heroTab) heroTab = TB.solve('CL', ['p⊃q', 'p'].map(L.parse), L.parse('q')).t;
+  if (!heroTab) heroTab = TB.solve('CL', ['P→Q', 'P'].map(L.parse), L.parse('Q')).t;
   return `<section class="title">
     <div class="tsnd">${soundBtn()}</div>
-    <div class="logo"><span class="l1">L<span class="acc">O</span>GICA</span><span class="l2">POR ÁRBOLES</span></div>
-    <p class="tag">Las lógicas no clásicas de Graham Priest, a punta de árboles</p>
+    <div class="logo"><span class="l1">LOGIC</span><span class="l2">TABLEAUX</span></div>
+    <p class="tag">Árboles de verdad, de la lógica clásica a Gödel</p>
     <div class="hero">
       <div class="hero-owl">${owl(6, 'happy')}</div>
       <div class="hero-tree panel">${treeHTML(heroTab, { still: true })}</div>
     </div>
     <button class="btn pri big" data-act="start"><span class="blink">${any ? 'CONTINUAR' : 'PULSA START'}</span></button>
-    <div class="strip">${C.worlds.map(W => `<span class="wbadge" style="--wc:var(--w${W.k})" title="${esc('Capítulo ' + W.num + ': ' + W.logic)}">${raw(W.badge)}</span>`).join('')}</div>
+    <div class="strip">${C.worlds.map(W => `<span class="wbadge" style="--wc:var(--w${W.k})" title="${esc(W.logic)}">${raw(W.badge)}</span>`).join('')}</div>
   </section>`;
 }
 
 /* ---------- mapa ---------- */
 function scrMap() {
   const themeName = { '': 'Auto', light: 'Día', dark: 'Noche' }[save.theme];
-  return hud('MAPA DEL MAR', 'title') + `<div class="map">` + C.worlds.map((W, i) => {
+  return hud('MAPA DE MUNDOS', 'title') + `<div class="map">` + C.worlds.map((W, i) => {
     const s = wstat(i), open = worldOpen(i);
     return `<button class="wcard${open ? '' : ' locked'}" style="--wc:var(--w${W.k});--bgimg:var(--img-w${W.k})" data-act="world" data-w="${i}">
       <span class="wbadge">${raw(W.badge)}</span>
-      <span class="winfo"><span class="wnum">${W.num === '0' ? 'PRÓLOGO' : 'CAPÍTULO ' + W.num}</span><b>${W.name}</b><span class="wlogic">${W.logic}</span></span>
+      <span class="winfo"><span class="wnum">MUNDO ${W.k}</span><b>${W.name}</b><span class="wlogic">${W.logic}</span></span>
       <span class="wprog">${open
         ? `<span class="pbar"><i style="width:${Math.round(100 * s.done / s.total)}%"></i></span><span class="cnt">${s.done}/${s.total} · ${ico('star')} ${s.stars}</span>`
-        : `<span class="cnt lockmsg">${ico('lock')} Completa el 60 % del capítulo anterior</span>`}</span>
+        : `<span class="cnt lockmsg">${ico('lock')} Completa el 60 % del mundo anterior</span>`}</span>
     </button>`;
   }).join('') + `
   <div class="opts panel">
@@ -257,15 +269,15 @@ function scrMap() {
     <button class="btn sm" data-act="theme">Tema: ${themeName}</button>
     <button class="btn sm" data-act="wipe">Borrar progreso</button>
     </div>
-    <span class="optnote">El modo libre abre todos los capítulos y etapas.</span>
+    <span class="optnote">El modo libre abre todos los mundos y etapas.</span>
   </div></div>`;
 }
 
 /* ---------- mundo ---------- */
-const TYPE = { T: ['book', 'Teoría'], A: ['tree', 'Árbol'], M: ['val', 'Valores'], Q: ['quiz', 'Preguntas'], TT: ['grid', 'Tabla'], V: ['gear', 'Máquina'] };
+const TYPE = { T: ['book', 'Teoría'], A: ['tree', 'Árbol'], M: ['val', 'Valores'], Q: ['quiz', 'Preguntas'], TT: ['grid', 'Tabla'], GN: ['num', 'Codificación'], V: ['gear', 'Máquina'] };
 function scrWorld() {
   const W = C.worlds[V.w];
-  return hud(W.name, 'map', (W.num === '0' ? 'Prólogo' : 'Capítulo ' + W.num) + ' · ' + W.logic) + `
+  return hud(W.name, 'map', W.logic) + `
   <div class="dialog small slim" data-act="twskip"><div class="who">${owl(2, 'neutral')}</div><div class="say" data-tw="W${V.w}">${tx(W.intro)}</div></div>
   <ol class="stages">` + W.stages.map((s, i) => {
     const d = save.done[sid(V.w, i)], open = stageOpen(V.w, i);
@@ -289,6 +301,9 @@ function enterStage() {
     const cols = s.cols.map(L.parse), atoms = L.atomsOf(cols), rows = SEM.valuations(s.sys, atoms);
     ST = { type: 'TT', stage: s, cols, atoms, rows, cells: cols.map(() => rows.map(() => null)), mark: null, checks: 0, solved: false, msg: { k: 'info', h: tx(s.intro) } };
   }
+  if (s.t === 'GN') {
+    ST = { type: 'GN', stage: s, word: s.word, ans: s.word.map(() => null), cur: 0, mark: null, checks: 0, solved: false, msg: { k: 'info', h: tx(s.intro) } };
+  }
   if (s.t === 'M') {
     const prem = s.prem.map(L.parse), goal = s.concl ? L.parse(s.concl) : null, val = {};
     const atoms = s.dom ? SEM.groundAtoms(goal ? [...prem, goal] : prem, s.dom, SEM.MV[s.sys].fid) : L.atomsOf(goal ? [...prem, goal] : prem);
@@ -307,8 +322,8 @@ function enterStage() {
 }
 function scrStage() {
   const s = ST.stage, W = C.worlds[V.w];
-  const head = hud(esc(s.title), 'toWorld', `${W.num === '0' ? 'Prólogo' : 'Capítulo ' + W.num} · etapa ${V.s + 1} de ${W.stages.length}`);
-  return head + ({ T: scrTheory, A: scrTree, M: scrModel, Q: scrQuiz, TT: scrTable, V: scrLab })[ST.type]();
+  const head = hud(esc(s.title), 'toWorld', `Mundo ${W.k} · etapa ${V.s + 1} de ${W.stages.length}`);
+  return head + ({ T: scrTheory, A: scrTree, M: scrModel, Q: scrQuiz, TT: scrTable, GN: scrGodel, V: scrLab })[ST.type]();
 }
 const KMOOD = { err: 'sad', hint: 'think', ok: 'happy' };
 const sayBox = (m, small) => {
@@ -320,7 +335,7 @@ const sayBox = (m, small) => {
 function figHTML(f) {
   if (Array.isArray(f)) return `<div class="figrow">${f.map(figHTML).join('')}</div>`;
   if (f.k === 'table') return `<div class="tw"><table class="tbl${f.tight ? ' tight' : ''}"><thead><tr>${f.head.map(h => `<th>${tx(h)}</th>`).join('')}</tr></thead><tbody>${f.rows.map(r => `<tr>${r.map(c => `<td>${tx(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
-  if (f.k === 'tab') {   // un árbol del libro, hecho por el motor
+  if (f.k === 'tab') {   // un árbol de ejemplo, hecho por el motor
     if (!f.cache) f.cache = TB.solve(f.sys, f.prem.map(L.parse), L.parse(f.concl), 300);
     const r = f.cache;
     return `<div class="figtree">${treeHTML(r.t, { still: true, openLeaf: r.open && r.open.id })}${f.cap ? `<p class="cap">${tx(f.cap)}</p>` : ''}</div>`;
@@ -336,7 +351,7 @@ function scrTheory() {
   const mood = p.mood || moodOf(p.say);
   return `<div class="theory">
     <div class="scene panel${p.fig ? '' : ' empty'}">${p.fig ? figHTML(p.fig) : `<div class="scene-owl">${owl(7, mood)}</div>`}</div>
-    <div class="dialog big" data-act="twskip"><div class="who">${owl(4, mood)}<span>RAMÓN</span></div><div class="say" data-tw="T${V.w}-${V.s}-${ST.page}">${tx(p.say)}</div></div>
+    <div class="dialog big" data-act="twskip"><div class="who">${owl(4, mood)}<span>MINERVA</span></div><div class="say" data-tw="T${V.w}-${V.s}-${ST.page}">${tx(p.say)}</div></div>
     <div class="tnav">
       <button class="btn" data-act="tprev" ${ST.page ? '' : 'disabled'}>${ico('back')}<span>Atrás</span></button>
       <span class="pg">${s.pages.map((x, i) => `<i class="${i === ST.page ? 'on' : ''}"></i>`).join('')}</span>
@@ -344,7 +359,7 @@ function scrTheory() {
     </div>
   </div>`;
 }
-/* Ramón escribe letra a letra, con voz de pitidos, y mueve la boca mientras habla */
+/* Minerva escribe letra a letra, con voz de pitidos, y mueve la boca mientras habla */
 function typewriter(el) {
   const box = el.closest('.dialog');
   const bird = box && box.querySelector('.owl');
@@ -568,7 +583,7 @@ function playSolution() {
 }
 
 /* ----- contramodelos ----- */
-const VN = { 1: '1', 0: '0', b: 'b', n: 'n', '1': '1', '0': '0' };
+const VN = { 1: 'V', 0: 'F', b: 'A', n: 'N', '1': 'V', '0': 'F' };
 const vcls = v => (v === 1 || v === '1' ? 'v2' : v === 'b' || v === 'n' || v === 0.5 ? 'v1' : 'v0');
 const vchip = v => `<span class="vchip ${vcls(v)}">${esc(VN[v] != null ? VN[v] : v)}</span>`;
 function worldName(w) { return w == null ? '' : w.endsWith('#') ? 'w' + w.slice(0, -1) + '*' : 'w' + w; }
@@ -677,7 +692,7 @@ function scrModel() {
     const v = SEM.evMV(s.sys, f, ST.val, s.dom), good = des(v) === want;
     if (!good) all = false;
     return `<tr><td class="lab">${lab}</td><td>${fh(f)}</td><td>${vchip2(s.sys, v)}</td>
-      <td class="want ${good ? 'good' : 'no'}">${ico(good ? 'check' : 'cross')}<span>${want ? 'debe ser designada' : 'no debe ser designada'}</span></td></tr>`;
+      <td class="want ${good ? 'good' : 'no'}">${ico(good ? 'check' : 'cross')}<span>${want ? (S.des.length > 1 ? 'debe ser V o A' : 'debe ser verdadera') : (S.des.length > 1 ? 'debe ser F' : 'debe ser falsa')}</span></td></tr>`;
   }).join('');
   ST.all = all;
   if (S.glb) {   // L: no hay designados fijos; la conclusión tiene que quedar por debajo del mínimo de las premisas
@@ -702,7 +717,7 @@ function scrModel() {
         <div class="vals">${ST.atoms.map(a => `<div class="vrow"><span class="fm">${esc(a)}</span><span class="seg">${S.vals.map(v => `<button class="vbtn ${vcls(v)}${ST.val[a] === v ? ' on' : ''}" data-act="val" data-a="${a}" data-v="${v}" aria-pressed="${ST.val[a] === v}">${esc(SEM.vname(s.sys, v))}</button>`).join('')}</span></div>`).join('')}</div>
         <div class="mlabel">RESULTADO</div>
         <div class="tw"><table class="tbl vt"><tbody>${rows}</tbody></table></div>
-        <p class="cap">${s.dom ? `Dominio: {${s.dom.join(', ')}}; ∀ toma el mínimo y ∃ el máximo. ` : ''}Valores designados: ${S.des.map(v => SEM.vname(s.sys, v)).join(' y ')}.</p>
+        <p class="cap">${s.dom ? `Dominio: {${s.dom.join(', ')}}; ∀ toma el mínimo y ∃ el máximo. ` : ''}Cuentan como verdaderos: ${S.des.map(v => SEM.vname(s.sys, v)).join(' y ')}.</p>
       </div>
       <div class="side">${sayBox(ST.msg, true)}</div>
     </div>
@@ -728,6 +743,42 @@ function scrTable() {
           <button class="btn pri" data-act="tcheck" ${filled && !ST.solved ? '' : 'disabled'}>Comprobar</button>
           <button class="btn sm" data-act="tclear" ${ST.solved ? 'disabled' : ''}>Borrar todo</button></div>
           <p class="cap">Toca una casilla para ir cambiando su valor: ${S.vals.map(v => SEM.vname(ST.stage.sys, v)).join(', ')}.</p></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ----- numeración de Gödel ----- */
+const PRIMES = [2, 3, 5, 7, 11, 13];
+const GCODE = new Map(C.GODEL);
+const gnNumber = word => word.reduce((n, sym, i) => n * BigInt(PRIMES[i]) ** BigInt(GCODE.get(sym)), 1n);
+const group = n => (String(n).length < 5 ? String(n) : String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' '));   // 2430, pero 20 212 500
+function scrGodel() {
+  const s = ST.stage, enc = s.mode === 'enc', n = group(gnNumber(ST.word));
+  const slots = ST.word.map((sym, i) => {
+    const a = ST.ans[i], mk = ST.mark ? ST.mark[i] : '';
+    const body = enc
+      ? `<span class="gtop">${fm(sym)}</span><span class="gpow">${PRIMES[i]}<sup>${a == null ? '?' : a}</sup></span>`
+      : `<span class="gpow">${PRIMES[i]}<sup>${GCODE.get(sym)}</sup></span><span class="gbot">${a == null ? '?' : fm(a)}</span>`;
+    return `<button class="gslot${i === ST.cur && !ST.solved ? ' cur' : ''}${mk ? ' ' + mk : ''}" data-act="gslot" data-i="${i}" ${ST.solved ? 'disabled' : ''}>${body}</button>`;
+  }).join('');
+  const pal = C.GODEL.map(([sym, code]) => `<button class="key" data-act="gpick" data-v="${enc ? code : esc(sym)}" ${ST.solved ? 'disabled' : ''}>${enc ? code : fm(sym)}</button>`).join('');
+  const filled = ST.ans.every(x => x != null);
+  return `<div class="proof">
+    <div class="goal panel"><span class="gtag">${enc ? 'CODIFICA' : 'DECODIFICA'}</span><span class="seq">${enc ? fm(ST.word.join('')) + (ST.solved ? ' = ' + n : '') : n + (ST.solved ? ' = ' + fm(ST.word.join('')) : '')}</span></div>
+    <div class="cols">
+      <div class="panel model gn">
+        <div class="mlabel">CLAVE</div>
+        <div class="tw"><table class="tbl gtab"><tbody><tr>${C.GODEL.map(([sym]) => `<td>${fm(sym)}</td>`).join('')}</tr><tr>${C.GODEL.map(([sym, code]) => `<td>${code}</td>`).join('')}</tr></tbody></table></div>
+        <div class="mlabel">TU RESPUESTA</div>
+        <div class="gslots">${slots}</div>
+        <div class="gpal">${pal}</div>
+      </div>
+      <div class="side">${sayBox(ST.msg, true)}
+        <div class="panel pal"><div class="acts">
+          <button class="btn pri" data-act="gcheck" ${filled && !ST.solved ? '' : 'disabled'}>Comprobar</button>
+          <button class="btn sm" data-act="gclear" ${ST.solved ? 'disabled' : ''}>Borrar todo</button></div>
+          <p class="cap">Toca una posición y luego elige su valor.</p></div>
       </div>
     </div>
   </div>`;
@@ -788,8 +839,8 @@ function labSay(r) {
   if (isMV(ST.sys)) {
     if (r.v === 'valid' && r.how === 'dom') return `${r.upto === 1 ? 'Un dominio de un objeto no da' : 'Ningún dominio de uno a ' + (r.upto === 2 ? 'dos' : 'tres') + ' objetos da'} un contraejemplo (revisé ${r.rows} valuaciones en el último). Es un buen indicio, no una prueba: los dominios pueden ser infinitos.`;
     if (r.v === 'valid' && r.how === 'grid') return `Ninguna de las ${r.rows} valuaciones de la cuadrícula (de décimo en décimo) la refuta. Es un buen indicio de validez, aunque no una prueba: en L los valores son infinitos.`;
-    if (r.v === 'valid') return `¡Válida! Revisé las ${r.rows} valuaciones: en ninguna las premisas son designadas y la conclusión no.`;
-    if (r.v === 'invalid') return 'Inválida. Con estos valores las premisas son designadas y la conclusión no.';
+    if (r.v === 'valid') return `¡Válida! Revisé las ${r.rows} valuaciones: en ninguna las premisas son verdaderas y la conclusión no.`;
+    if (r.v === 'invalid') return 'Inválida. Con estos valores las premisas son verdaderas y la conclusión no.';
     return 'Son demasiadas letras para revisar la tabla entera.';
   }
   if (r.v === 'valid') return `¡Válida! Todas las ramas del árbol se cerraron (${r.tab.nodes.length} líneas).`;
@@ -851,7 +902,7 @@ function scrQuiz() {
   const s = ST.stage, q = s.qs[ST.i], solved = ST.picked === q.ok;
   return `<div class="quiz">
     <div class="pg">${s.qs.map((x, i) => `<i class="${i === ST.i ? 'on' : i < ST.i ? 'past' : ''}"></i>`).join('')}</div>
-    <div class="dialog big" data-act="twskip"><div class="who">${owl(4, solved ? 'happy' : ST.bad.length ? 'sad' : 'think')}<span>RAMÓN</span></div><div class="say" data-tw="Q${V.w}-${V.s}-${ST.i}">${tx(q.q)}</div></div>
+    <div class="dialog big" data-act="twskip"><div class="who">${owl(4, solved ? 'happy' : ST.bad.length ? 'sad' : 'think')}<span>MINERVA</span></div><div class="say" data-tw="Q${V.w}-${V.s}-${ST.i}">${tx(q.q)}</div></div>
     <div class="qopts">${q.opts.map((o, i) => `<button class="btn qopt${solved && i === q.ok ? ' right' : ''}${ST.bad.includes(i) ? ' wrong' : ''}" data-act="qpick" data-i="${i}" ${solved || ST.bad.includes(i) ? 'disabled' : ''}>${tx(o)}</button>`).join('')}</div>
     ${solved ? `<div class="panel why"><b>${ico('check')} Correcto.</b> ${tx(q.why)}</div>
       <div class="tnav"><span></span><span></span><button class="btn pri" data-act="qnext"><span>${ST.i === s.qs.length - 1 ? 'Terminar' : 'Siguiente'}</span>${ico('next')}</button></div>`
@@ -877,14 +928,14 @@ function alphabet() {
     if (g.args.length) { fo = true; if (g.p !== '=') preds.add(g.p); g.args.forEach(a => { if (L.isTerm(a)) nm.add(a); }); }
     else preds.add(g.p);
   }));
-  const syms = [...(s.syms || '¬∧∨⊃')];
+  const syms = [...(s.syms || '¬∧∨→')];
   if (syms.includes('∀')) fo = true;
-  (fo ? 'PQ' : 'pqr').split('').forEach(c => preds.add(c));
+  (fo ? 'FGR' : 'PQR').split('').forEach(c => preds.add(c));
   const terms = fo ? [...new Set([...nm, 'a', 'b'])].sort().concat(['x', 'y']) : [];
   return { preds: [...preds].sort(), terms, syms, fo };
 }
-const KEYOF = { '¬': '~', '∧': '&', '∨': '|', '⊃': '>', '≡': '%', '□': '[', '◇': '<', '∀': '@', '∃': '?', '→': '-', '⊐': '}', '⥽': '$', '>': '¿', '=': '=' };
-const KEYMAP = { '~': '¬', '!': '¬', '&': '∧', '^': '∧', '|': '∨', '>': '⊃', '%': '≡', '[': '□', '<': '◇', '@': '∀', '?': '∃', '-': '→', '}': '⊐', '$': '⥽', '=': '=', '(': '(', ')': ')' };
+const KEYOF = { '¬': '~', '∧': '&', '∨': '|', '→': '>', '↔': '%', '□': '[', '◇': '<', '∀': '@', '∃': '?', '=': '=' };
+const KEYMAP = { '~': '¬', '!': '¬', '&': '∧', '^': '∧', '|': '∨', '>': '→', '-': '→', '%': '↔', '[': '□', '<': '◇', '@': '∀', '?': '∃', '=': '=', '(': '(', ')': ')' };
 function openFormula(title, sug, onOK) {
   const al = alphabet();
   FD = { buf: '', onOK, sug, al };
@@ -1073,7 +1124,7 @@ const ACT = {
       const stars = ST.moves <= ST.atoms.length + 1 ? 3 : 2;
       finish(stars);
       const mine = ST;
-      setTimeout(() => { if (ST === mine) winModal(stars, '¡BIEN!', mine.goal ? (SEM.MV[mine.stage.sys].glb ? 'La conclusión queda por debajo de las premisas: la inferencia es inválida.' : 'Premisas designadas y conclusión no: la inferencia es inválida.') : 'Todas designadas a la vez.'); }, 500);
+      setTimeout(() => { if (ST === mine) winModal(stars, '¡BIEN!', mine.goal ? (SEM.MV[mine.stage.sys].glb ? 'La conclusión queda por debajo de las premisas: la inferencia es inválida.' : 'Premisas verdaderas y conclusión no: la inferencia es inválida.') : 'Todas verdaderas a la vez.'); }, 500);
     }
   },
   qpick(d) {
@@ -1082,6 +1133,34 @@ const ACT = {
     render();
   },
   vadd() { labEdit('Escribe una premisa', f => { ST.prem.push(f); }); },
+  gslot(d) { ST.cur = +d.i; sfx.sel(); render(); },
+  gpick(d) {
+    ST.ans[ST.cur] = ST.stage.mode === 'enc' ? +d.v : d.v;
+    if (ST.mark) ST.mark[ST.cur] = '';
+    const next = ST.ans.findIndex((x, i) => x == null && i > ST.cur);
+    ST.cur = next >= 0 ? next : (ST.ans.indexOf(null) >= 0 ? ST.ans.indexOf(null) : ST.cur);
+    sfx.sel(); render();
+  },
+  gclear() { ST.ans = ST.word.map(() => null); ST.cur = 0; ST.mark = null; say('info', tx(ST.stage.intro)); sfx.page(); render(); },
+  gcheck() {
+    ST.checks++;
+    const enc = ST.stage.mode === 'enc';
+    let bad = 0;
+    ST.mark = ST.word.map((sym, i) => { const ok = ST.ans[i] === (enc ? GCODE.get(sym) : sym); if (!ok) bad++; return ok ? 'good' : 'bad'; });
+    if (bad) {
+      ST.cur = ST.mark.indexOf('bad');
+      sfx.err();
+      say('err', `Hay ${bad} ${bad === 1 ? 'posición que no cuadra' : 'posiciones que no cuadran'}, en rojo. Mira otra vez la clave.`);
+      render(); return;
+    }
+    ST.solved = true;
+    const stars = ST.checks === 1 ? 3 : ST.checks === 2 ? 2 : 1;
+    finish(stars);
+    say('ok', '¡Codificación correcta!');
+    render();
+    const mine = ST;
+    setTimeout(() => { if (ST === mine && V.scr === 'stage') winModal(stars, mine.checks === 1 ? 'Correcta a la primera' : mine.checks + ' comprobaciones'); }, 600);
+  },
   vconc() { labEdit('Escribe la conclusión', f => { ST.concl = f; }); },
   vdel(d) { ST.prem.splice(+d.i, 1); ST.res = null; sfx.page(); render(); },
   vdelc() { ST.concl = null; ST.res = null; sfx.page(); render(); },
@@ -1180,6 +1259,11 @@ function padPress(k) {
     if (k === 'select') openBook();
     return;
   }
+  if (T === 'GN' && !ST.solved) {
+    if (k === 'R' && ST.ans.every(x => x != null)) ACT.gcheck();
+    if (k === 'select') ACT.gclear();
+    return;
+  }
   if (T === 'TT' && !ST.solved) {
     if (k === 'R' && ST.cells.every(col => col.every(x => x != null))) ACT.tcheck();
     if (k === 'select') ACT.tclear();
@@ -1201,10 +1285,11 @@ function legend() {
   if (!modal.hidden) items = [['A', 'elegir'], ['B', modal.querySelector('.win') ? 'etapas' : 'cerrar']];
   else if (V.scr === 'title') items = [['A', 'jugar'], ['START', 'jugar']];
   else if (V.scr === 'map') items = [['A', 'entrar'], ['B', 'portada'], ['START', 'volumen']];
-  else if (V.scr === 'world') items = [['A', 'entrar'], ['B', 'mapa'], ['L R', 'otro capítulo']];
+  else if (V.scr === 'world') items = [['A', 'entrar'], ['B', 'mapa'], ['L R', 'otro mundo']];
   else if (T === 'T') items = [['A', 'seguir'], ['B', 'salir'], ['L R', 'página']];
   else if (T === 'A') items = [['A', 'elegir'], ['START', 'aplicar'], ['B', 'salir'], ['L', 'deshacer'], ['R', 'pista'], ['SELECT', 'reglas']];
   else if (T === 'TT') items = [['A', 'cambiar'], ['B', 'salir'], ['R', 'comprobar'], ['SELECT', 'borrar']];
+  else if (T === 'GN') items = [['A', 'elegir'], ['B', 'salir'], ['R', 'comprobar'], ['SELECT', 'borrar']];
   else if (T === 'V') items = [['A', 'elegir'], ['B', 'salir'], ['R', 'construir'], ...(ST.stage.sys.length > 1 ? [['L', 'sistema']] : []), ['SELECT', 'vaciar']];
   else if (T === 'Q') items = [['A', 'elegir'], ['B', 'salir'], ['R', 'siguiente']];
   else items = [['A', 'elegir'], ['B', 'salir'], ['START', 'volumen']];

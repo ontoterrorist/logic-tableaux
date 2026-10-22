@@ -1,272 +1,71 @@
-/* Pruebas del motor de árboles con ejemplos del libro de Priest: node tools/engine-test.js */
+/* Pruebas del motor de árboles con la notación de Logic Tableaux: node tools/engine-test.js */
+globalThis.window = globalThis;
 require('../src/logic.js');
 require('../src/tableau.js');
 const L = globalThis.Logic, T = globalThis.Tableau;
-const P = s => L.parse(s);
 let bad = 0, n = 0;
-function check(sys, prem, concl, want, note) {
+function check(sys, prem, concl, want) {
   n++;
   let r;
-  try { r = T.solve(sys, prem.map(P), P(concl), 600); } catch (e) { console.log('ERROR', sys, prem, concl, e.stack); bad++; return; }
+  try { r = T.solve(sys, prem.map(L.parse), L.parse(concl), 600); } catch (e) { console.log('ERROR', sys, prem, concl, e.message); bad++; return; }
   const ok = r.verdict === want;
   if (!ok) bad++;
-  if (!ok || process.argv.includes('-v')) console.log((ok ? 'ok  ' : 'MAL ') + sys.padEnd(6) + ' ' + prem.join(', ') + ' ⊢ ' + concl + '  → ' + r.verdict + ' (esperado ' + want + ', ' + r.t.nodes.length + ' líneas)' + (note ? '  ' + note : ''));
+  if (!ok || process.argv.includes('-v')) console.log((ok ? 'ok  ' : 'MAL ') + sys.padEnd(4) + ' ' + prem.join(', ') + ' ⊢ ' + concl + ' → ' + r.verdict + ' (esperado ' + want + ', ' + r.t.nodes.length + ' líneas)');
 }
-const V = 'valid', I = 'invalid';
-/* capítulo 1 */
-check('CL', ['p⊃q', 'q⊃r'], 'p⊃r', V);
-check('CL', [], '((p⊃q)∧(p⊃r))⊃(p⊃(q∧r))', V);
-check('CL', ['(p⊃q)∨(r⊃q)'], '(p∨r)⊃q', I);
-check('CL', ['p⊃(q∧r)', '¬r'], '¬p', V);
-check('CL', [], '((p⊃q)⊃q)⊃q', I);
-check('CL', ['p≡(q≡r)'], '(p≡q)≡r', V);
-check('CL', ['p∧(¬r∨s)', '¬(q⊃s)'], 'r', I);
-/* capítulo 2 */
-check('K', ['□(p⊃q)∧□(q⊃r)'], '□(p⊃r)', V);
-check('K', [], '◇(p∧q)⊃(◇p∧◇q)', V);
-check('K', [], '(◇p∧◇¬q)⊃◇□◇p', I);
-check('K', [], '□p⊃p', I);
-check('K', ['□p', '◇q'], '◇(p∧q)', V);
-check('K', [], '□p⊃◇p', I);
-check('K', [], '◇(p∨¬p)', I);
-/* capítulo 3 */
-check('T', [], '□p⊃p', V);
-check('Kσ', [], 'p⊃□◇p', V);
-check('Kτ', [], '□p⊃□□p', V);
-check('D', [], '□p⊃◇p', V);
-check('Kρσ', [], '□p⊃□□p', I);
-check('S5', [], '◇p⊃□◇p', V);
-check('Kυ', [], '◇p⊃□◇p', V);
-check('S4', [], '◇□p⊃□◇p', I);
-check('Kt', ['p'], '[P]⟨F⟩p', V);
-check('Kt', [], 'p⊃([F]p∨[P]p)', I);
-check('Kt', ['p'], '[F]⟨P⟩p', V);
-/* capítulo 4 */
-check('N', [], '□(p⊃q)⊃(□p⊃□q)', V);
-check('N', [], '□(p⊃□(q⊃q))', I);
-check('K', [], '□(p⊃□(q⊃q))', V);
-check('S2', ['p', 'p⥽q'], 'q', V);
-check('N', ['p', 'p⥽q'], 'q', I);
-check('S2', ['□q'], 'p⥽q', V);
-check('S3', [], '(p⥽q)⥽(□p⥽□q)', V);
-check('S2', [], '(p⥽q)⥽(□p⥽□q)', I);
-check('L', [], '□(□p∨¬□p)', V);
-check('L', [], '□(□(p⊃p)∨◇(q∧¬q))', I);
-/* capítulo 5 */
-check('C', ['p>q'], 'p>(q∨r)', V);
-check('C', ['p>r'], '(p∧q)>r', I);
-check('C', ['p>q', 'q>r'], 'p>r', I);
-check('C', ['p>q'], '¬q>¬p', I);
-check('C', ['p', 'p>q'], 'q', I);
-check('C+', ['p', 'p>q'], 'q', V);
-check('C+', ['p>r'], 'p>(r∧q)', I);
-check('C+', [], 'p>p', V);
-/* capítulo 6 */
-check('I', [], 'p⊐¬¬p', V);
-check('I', ['p⊐q'], '¬p∨q', I);
-check('I', [], 'p∨¬p', I);
-check('I', [], '¬¬p⊐p', I);
-check('I', [], '(p∧¬p)⊐q', V);
-check('I', ['p∨q', '¬p'], 'q', V);
-/* capítulo 8 */
-check('FDE', ['¬(q∧¬r)∧p'], '(¬q∨r)∨s', V);
-check('FDE', ['p∧(q∨¬q)'], 'r', I);
-check('FDE', ['p∧¬p'], 'q', I);
-check('K3', ['p∧¬p'], 'q', V);
-check('LP', ['p'], 'q∨¬q', V);
-check('FDE', ['p'], 'q∨¬q', I);
-check('LP', ['p∧¬p'], 'q', I);
-check('K3', ['p'], 'q∨¬q', I);
-check('FDE', ['p', '¬p∨q'], 'q', I);
-check('FDE*', ['¬(q∧¬r)∧p'], '(¬q∨r)∨s', V);
-check('FDE*', ['p∧(q∨¬q)'], 'r', I);
-check('Ł3', ['p', 'p⊃q'], 'q', V);
-check('Ł3', [], 'p⊃p', V);
-check('K3', [], 'p⊃p', I);
-check('RM3', ['p', 'p⊃q'], 'q', V);
-check('LP', ['p', 'p⊃q'], 'q', I);
-/* capítulo 9 */
-check('K4', ['p→q', 'q→r'], 'p→r', V);
-check('K4', ['p→q'], '¬q→¬p', I);
-check('K4', [], 'p→(q∨¬q)', I);
-check('K4', [], 'p→(q→q)', V);
-check('N4', [], '¬(p→p)→(q→q)', I);
-check('N4', ['p→q', 'q→r'], 'p→r', V);
-check('K*', ['p∧¬q'], '¬(p→q)', I);
-check('K*', ['p→q'], '¬q→¬p', V);
-check('I4', [], '¬¬p⊐p', V);
-check('I4', [], '(p∧¬p)⊐q', I);
-check('I3', [], '(p∧¬p)⊐q', V);
-check('W', [], '¬(p⊐¬p)', V);
-check('W', [], '(p⊐q)⊐¬(p⊐¬q)', V);
-check('W', [], '(p∧¬p)⊐¬(p∧¬p)', V);
-check('I4', [], '¬(p⊐¬p)', I);
-/* capítulo 10 */
-check('B', ['p→q'], '(q→r)→(p→r)', V);
-check('B', [], 'p→((p→q)→q)', I);
-check('B', [], 'p→p', V);
-check('B', [], '(p∧q)→p', V);
-check('B', [], '¬¬p→p', V);
-check('B', ['p', 'p→q'], 'q', V);
-check('B', ['p→¬q'], 'q→¬p', V);
-check('B', [], '(p→¬q)→(q→¬p)', I);
-check('DW', [], '(p→¬q)→(q→¬p)', V);
-check('B', [], '((p→q)∧(p→r))→(p→(q∧r))', V);
-check('B', ['p→q'], '(r→p)→(r→q)', V);
-check('B', [], 'q→(p→p)', I);
-check('B', [], '(p∧¬p)→q', I);
-check('CB', ['p>q'], 'p>(q∨r)', V);
-check('CB+', [], '(p∧¬p)>q', I);
-check('CB+', ['p', 'p>q'], 'q', V);
-check('CB', ['p', 'p>q'], 'q', I);
-/* apéndice 11a */
-check('KFDE', ['□p∧¬□q'], '◇(p∧¬q)', V);
-check('KFDE', ['□(p⊃q)', '◇p'], '◇q', I);
-check('KK3', ['□(p⊃q)', '◇p'], '◇q', V);
-check('KK3τ', ['□p'], '□□p', V);
-check('KLPρ', ['□p'], 'p', V);
-check('KFDE', [], '□(p∨¬p)', I);
-check('KLP', [], '□(p∨¬p)', V);
-check('A', ['p'], '□p', V);
-check('A', ['¬p'], '□¬p', V);
-check('A', [], 'p∨¬p', I);
-check('A', [], '□(p∨¬p)', I);
-/* capítulo 12 */
-check('FOL', ['∀x(Px⊃Qx)', '∀x(Qx⊃Sx)'], '∀x(Px⊃Sx)', V);
-check('FOL', [], '∀xPx⊃∃xPx', V);
-check('FOL', ['∃x(Px⊃Qx)'], '∀x¬Qx', I);
-check('FOL', [], 'a=b⊃(∃xSxa⊃(a=a∧∃xSxb))', V);
-check('FOL', ['a=b'], '∀x∃y(Py∧x=y)', I);
-check('FOL', ['∀x∃yRxy'], '∃y∀xRxy', 'unknown', 'árbol infinito');
-check('FOL', ['∃y∀xRxy'], '∀x∃yRxy', V);
-check('FOL', ['a=b', 'Pa'], 'Pb', V);
-check('FOL', ['a=b'], 'b=a', V);
-/* capítulo 13 */
-check('FREE', [], '∀xPx⊃∃xPx', I);
-check('FREE', ['∀xPx'], 'Pa', I);
-check('FREE', ['∀xPx', 'Ea'], 'Pa', V);
-check('FREE', ['∀xPx', '∃xQx'], '∃x(Px∧Qx)', V);
-check('FREE', ['Pa'], '∃xPx', I);
-check('FREE', [], '∃x(Px∨¬Px)', I);
-check('NFREE', ['Pa'], '∃xPx', V);
-check('NFREE', [], '(Qab∧¬Sac)⊃Ec', I);
-check('NFREE', ['¬Ea'], '¬a=b', V);
-check('NFREE', [], '(Ea∨a=a)∧(¬Ea∨a=a)', I);
-check('FREE', [], '(Ea∨a=a)∧(¬Ea∨a=a)', V);
-/* capítulos 14 y 15 */
-check('CK', [], '∃x◇Px⊃◇∃xPx', V);
-check('CK', [], '∀x□Px⊃□∀xPx', V);
-check('CK', [], '□∀xPx⊃∀x□Px', V);
-check('CK', ['◇∃xPx'], '◇∃x(Px∧Qb)', I);
-check('CT', [], '∃x□Px⊃∃xPx', V);
-check('CK', [], '∃x□Px⊃∃xPx', I);
-check('CS5', ['∃xSxb'], '∀x□◇Sxb', I);
-check('CKt', [], '∃xQx⊃[P]∃x⟨F⟩Qx', V);
-check('VK', [], '∀x□Px⊃□∀xPx', I);
-check('VK', [], '□∀xPx⊃∀x□Px', I);
-check('VK', ['□∀x(Px⊃Qx)'], '□∀xPx⊃□∀xQx', V);
-check('VK+', [], '□∀xPx⊃∀x□Px', V);
-check('VK−', ['◇Pa'], '◇∃xPx', V);
-check('VK', ['◇Pa'], '◇∃xPx', I);
-check('VKτt', ['⟨P⟩⟨P⟩∃xQx'], '⟨P⟩∃x(Qx∨Sx)', V);
-check('VKt', ['∃x⟨P⟩Qx∧∃xQx'], '∃x⟨F⟩Qx', I);
-/* capítulo 16 */
-check('VK=', [], '∀x∀y(x=y⊃□x=y)', V);
-check('VK=', [], '∀x∀y(¬x=y⊃□¬x=y)', V);
-check('CK=', [], '□∀x∀y((Sax∧Say)⊃x=y)', I);
-check('VK=−', [], 'a=b⊃□(Ea⊃a=b)', V);
-check('VK=−', [], '∀x∀y(x=y⊃□x=y)', I);
-check('CK=', ['∀x□Px'], '□Pα', V);
-check('CK=', [], 'a=α⊃□a=α', I);
-check('CK=', ['a=b'], '□a=b', V);
-/* capítulo 17 */
-check('CK≈', [], '∀x∀y□(x=y⊃(Px⊃Py))', V);
-check('CS5≈', [], '∀x∀y(x=y⊃□x=y)', I);
-check('CK≈', [], '∀x∀y((◇x=y∧Px)⊃Py)', I);
-check('CK≈', ['a=b', '□a=a'], '□a=b', I);
-check('CK=', ['a=b', '□a=a'], '□a=b', V);
-check('CK≈', ['Pa'], '∃xPx', V);
-/* capítulo 18 */
-check('CL(L)', [], '∀x□Px⊃□Pa', V);
-check('CL(L)', [], '□(∃x◇(Px∧Qx)⊃∃x◇Px)', I);
-check('VL', [], '□(∃x□Px⊃∃xPx)', I);
-check('CN', [], '∀x□Px⊃∀x□(Qx∨□Qx)', I);
-check('CLρ', [], '□(◇∃xPx⊃¬◇∃xQx)', I);
-check('CN', ['∀x□(Px⊃Qx)', '□Pa'], '□Qa', V);
-/* capítulo 19 */
-check('CC', ['p>Pa'], 'p>∃xPx', V);
-check('CC', ['∀x(Px>Qx)'], '∀xPx>∀xQx', I);
-check('VC', ['∀x(p>Px)'], '∀x(p>(Px∨Qx))', V);
-check('VC', ['∀x(Px>Sx)'], '∀x((Px∧Qx)>Sx)', I);
-check('VC+', ['Ea', 'Pa', '∀x(Px>Qx)'], 'Qa', V);
-check('CC+', ['∀x□(Px⊃Qx)'], '∀x(Px>Qx)', V);
-check('CC+', ['∀xQx'], '∀x(Px>Qx)', I);
-check('CC', [], '∀xPx>Pa', I);
-check('CC+', [], '∀xPx>Pa', V);
-/* capítulo 20 */
-check('IQ', [], '∀xPx⊐Pa', V);
-check('IQ', [], '∃x(Px∨¬Px)', I);
-check('IQ', ['∀x¬Px'], '¬∃xPx', V);
-check('IQ', ['∀x(Pa∨Qx)'], 'Pa∨∀xQx', I);
-check('FOL', ['∀x(Pa∨Qx)'], 'Pa∨∀xQx', V);
-check('IQ', [], '∀xPx⊐∃xPx', V);
-check('IQ', ['¬∀xPx'], '∃x¬Px', I);
-check('IQ', ['∃x¬Px'], '¬∀xPx', V);
-check('IQ=', [], 'a=b⊐(b=c⊐a=c)', V);
-check('IQ=', [], '(a=b∨b=c)⊐a=c', I);
-check('IQ=', [], '∀x∀y(x=y⊐(Px⊐Py))', V);
-check('IQ=', [], '∀x∀y(x=y∨¬x=y)', I);
-/* capítulo 22 */
-check('QFDE', ['∀x(Px∧Qx)'], '∀xPx∧∀xQx', V);
-check('QFDE', ['∀xPx', '∀x(Px⊃Qx)'], '∀xQx', I);
-check('QK3', ['∀xPx', '∀x(Px⊃Qx)'], '∀xQx', V);
-check('FFDE', ['∀x(Px∧Qx)'], '∀xPx∧∀xQx', V);
-check('FFDE', ['∀xPx', '∀x(Px⊃Qx)'], '∀xQx', I);
-check('QFDE', ['a=b', 'b=c', 'Pa'], 'Pc', V);
-check('QFDE', [], '∀x x=x', V);
-check('QFDE', ['a=b', 'b=c', 'Pa', '¬Pc'], 'a=c', V);
-check('QFDE', ['a=b', 'b=c', 'Pa', '¬Pc'], '¬a=c', I);
-check('QFDE*', ['a=b∧¬Pa'], '¬Pb', V);
-check('QFDE*', ['a=b∨b=c'], 'a=c', I);
-check('QFDE*', [], 'a=b∨¬a=b', V);
-check('QFDE', [], 'a=b∨¬a=b', I);
-check('FFDE−', ['Pa'], '∃xPx', V);
-check('FFDE0', ['¬Pa'], 'Ea', V);
-check('FFDE−', ['¬Pa'], 'Ea', I);
-check('QLP', [], '∀x(Px∨¬Px)', V);
-check('QFDE', ['∃xPx∧∃xQx'], '∃x(Px∧Qx)', I);
-/* capítulo 23 */
-check('QN4', ['∀x(Px→Qx)'], '∃xPx→∃xQx', V);
-check('QN4', [], '∀x(Px→Qx)→(∀xPx→∀xQx)', I);
-check('QN*', ['∀x(Px→Qx)'], '∃x¬Qx→∃x¬Px', V);
-check('QN*', [], '∀x(Px→Qx)→(∃x¬Qx→∃x¬Px)', I);
-check('QK4', [], '∀x(Px→Qx)→(∀xPx→∀xQx)', V);
-check('QK*', ['∃x(Px→Qx)'], '∃xPx→¬∃xQx', I);
-check('QI4', ['∃x(¬Px∧¬Qx)'], '¬∀x(Px∨Qx)', V);
-check('QI4', ['∀x(Px⊐Qx)'], '¬∀xPx∨∀xQx', I);
-check('QI4', [], '∀xPx⊐Pa', V);
-check('QI3', ['∃x(Px∧¬Px)'], 'q', V);
-check('QI4', ['∃x(Px∧¬Px)'], 'Qa', I);
-/* capítulo 24 */
-check('QB', ['∀x(Px→Qx)'], '∃xPx→∃xQx', V);
-check('QB', [], '∀x(Px⊃Qx)→∀x(Px→Qx)', I);
-check('QB', ['Pa', '∀x(Px⊃Qx)'], 'Qa', I);
-check('QB', ['Pa', '∀x(Px→Qx)'], 'Qa', V);
-check('QB', ['∀xQx'], '∀x(Px→Qx)', I);
-check('QDW', [], '(Pa→∃x¬Qx)→(∀xQx→¬Pa)', V);
-check('QB=', ['a=b'], 'Pa→Pb', V);
-check('QB=', [], 'Pa→(a=b→Pb)', I);
-check('QB=⊆', [], 'Pa→(a=b→Pb)', I);
-check('QB=', [], '(a=b∧Pa)→Pb', I);
-check('QB=⊆', [], '(a=b∧Pa)→Pb', V);
-check('QB=⊆', ['a=b'], 'Pc→a=b', I);
-check('QB=⊆', ['a=b'], 'a=b→Pc', I);
-check('QB=⊆', [], 'a=b→(Pa→Pb)', I);
-check('QB=', [], 'a=a', V);
-check('QB=', ['a=b'], 'b=a', V);
-check('QB=', ['a=b∧b=c'], 'a=c', V);
-check('QB=', [], 'a=b→b=a', I);
-check('QB=⊆', [], 'a=b→b=a', V);
-check('QB=', ['a=b', 'Pa'], 'Pb', V);
-console.log(bad ? `${bad} de ${n} fallan` : `${n} pruebas del motor, todas bien`);
+const V = 'valid', I = 'invalid', U = 'unknown';
+/* mundo 1: proposicional clásica */
+check('CL', ['P→Q', 'Q→R'], 'P→R', V);
+check('CL', ['P↔Q', 'Q↔R'], 'P↔R', V);
+check('CL', ['P→Q', 'Q'], 'P', I);
+check('CL', ['P∨Q', 'P'], '¬Q', I);
+check('CL', ['¬(P∧Q)'], '¬P∨¬Q', V);
+check('CL', [], '((P→Q)→P)→P', V);
+/* mundo 2: primer orden */
+check('FOL', ['∀x(Hx→Mx)', 'Ha'], 'Ma', V);
+check('FOL', ['∃x∀yRxy'], '∀y∃xRxy', V);
+check('FOL', ['∃xFx', '∃xGx'], '∃x(Fx∧Gx)', I);
+check('FOL', [], '∃x(Fx→∀yFy)', V);
+check('FOL', ['∀y∃xRxy'], '∃x∀yRxy', U);
+/* mundo 3: modal */
+check('K', ['□(P→Q)', '□P'], '□Q', V);
+check('K', ['□P'], '◇P', I);
+check('T', ['P'], '◇P', V);
+check('T', ['□P'], '□□P', I);
+check('S4', ['□P'], '□□P', V);
+check('S4', ['◇P'], '□◇P', I);
+check('S5', ['◇P'], '□◇P', V);
+check('S5', ['◇□P'], '□P', V);
+/* mundo 4: modal de primer orden, dominio constante */
+check('CK', ['∀x□Fx'], '□∀xFx', V);
+check('CK', ['□∀xFx'], '∀x□Fx', V);
+check('CK', ['∃x□Fx'], '□∃xFx', V);
+check('CK', ['□∃xFx'], '∃x□Fx', U);
+check('CK', ['∀x□Fx'], '∃xFx', I);
+check('CT', ['∀x□Fx'], '∃xFx', V);
+/* mundo 5 y 7: intuicionista */
+check('I', ['P'], '¬¬P', V);
+check('I', ['¬¬P'], 'P', I);
+check('I', [], 'P∨¬P', I);
+check('I', [], '¬¬(P∨¬P)', V);
+check('I', ['¬(P∨Q)'], '¬P∧¬Q', V);
+check('I', ['¬(P∧Q)'], '¬P∨¬Q', I);
+check('IQ', ['∃x¬Fx'], '¬∀xFx', V);
+check('IQ', ['¬¬∃xFx'], '∃xFx', I);
+check('IQ', [], '∀x(Fx∨¬Fx)', I);
+/* mundos 6 y 8: LP */
+check('LP', ['P', '¬P'], 'Q', I);
+check('LP', ['P∨Q', '¬P'], 'Q', I);
+check('LP', [], 'P∨¬P', V);
+check('LP', ['P', '¬P∨Q'], 'Q∨(P∧¬P)', V);
+check('QLP', ['∀x(Fx∨Gx)', '∃x¬Fx'], '∃xGx', I);
+check('QLP', ['∀x(Fx∨Gx)', '∃x¬Fx'], '∃x(Gx∨(Fx∧¬Fx))', V);
+check('QLP', [], '¬∃x(Fx∧¬Fx)', V);
+/* mundo 9: K4 y GL */
+check('K4', ['□(G↔¬□G)'], '□G→□(P∧¬P)', V);
+check('K4', [], '□P→□□P', V);
+check('GL', [], '□(□P→P)→□P', V);
+check('K4', [], '□(□P→P)→□P', U);
+check('GL', ['□P'], 'P', I);
+check('GL', ['¬□(P∧¬P)'], '¬□¬□(P∧¬P)', V);
+console.log(bad ? `${bad} problemas en ${n} pruebas` : `${n} pruebas del motor, todas bien`);
 process.exit(bad ? 1 : 0);

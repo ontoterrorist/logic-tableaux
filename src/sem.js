@@ -132,10 +132,10 @@ function checkMV(sys, prem, concl, dom) {
 }
 /* nombre visible de un valor */
 function vname(sys, x) {
-  if (MV[sys].four) return x === 'b' ? 'b' : x === 'n' ? 'n' : x;
-  if (x === 1) return '1';
-  if (x === 0) return '0';
-  if (MV[sys].vals.length === 3) return 'i';
+  if (MV[sys].four) return x === 'b' ? 'A' : x === 'n' ? 'N' : x === '1' ? 'V' : 'F';
+  if (x === 1) return 'V';
+  if (x === 0) return 'F';
+  if (MV[sys].vals.length === 3) return 'A';
   return String(x).replace('.', ',');
 }
 
