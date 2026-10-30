@@ -10,7 +10,7 @@ const fontCss = FONTS.map(([name, file]) =>
 
 /* fondos de los mundos (los de Logic Advance): src/bg/w<k>.png pasa a la variable --img-w<k> */
 const bgDir = path.join(__dirname, 'src', 'bg');
-const bgs = fs.existsSync(bgDir) ? fs.readdirSync(bgDir).filter(f => /^w\d+\.png$/.test(f)).sort() : [];
+const bgs = fs.existsSync(bgDir) ? fs.readdirSync(bgDir).filter(f => /^(w\d+|title)\.png$/.test(f)).sort() : [];
 const bgCss = bgs.length ? ':root {\n' + bgs.map(f => `  --img-${f.slice(0, -4)}: url(data:image/png;base64,${b64(path.join(bgDir, f))});`).join('\n') + '\n}' : '';
 
 /* Minerva: src/minerva/<expresión>.png y, si existen, <expresión>-blink.png y <expresión>-talk.png */
